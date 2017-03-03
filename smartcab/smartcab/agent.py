@@ -8,7 +8,7 @@ class LearningAgent(Agent):
     """ An agent that learns to drive in the Smartcab world.
         This is the object you will be modifying. """ 
 
-    def __init__(self, env, learning=True, epsilon=0.3, alpha=0.6):
+    def __init__(self, env, learning=True, epsilon=1.0, alpha=0.5):
         super(LearningAgent, self).__init__(env)     # Set the agent in the evironment 
         self.planner = RoutePlanner(self.env, self)  # Create a route planner
         self.valid_actions = self.env.valid_actions  # The set of valid actions
@@ -40,9 +40,9 @@ class LearningAgent(Agent):
         # Update additional class parameters as needed
         # If 'testing' is True, set epsilon and alpha to 0
         self.trial += 1
-        self.epsilon = 1 / math.sqrt(self.trial)
+        #self.epsilon = 1 / math.sqrt(self.trial)
         #self.epsilon = math.exp(-self.trial)
-        #self.epsilon = math.pow(self.trial, -0.3) 
+        self.epsilon = math.pow(self.trial, -0.85) 
         
         if testing:
             self.epsilon = 0
@@ -63,9 +63,8 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Set 'state' as a tuple of relevant data for the agent
-                
-        state = (waypoint, inputs['light'], inputs['oncoming'], inputs['left'], inputs['right'])
         
+        state = (waypoint, inputs['light'], inputs['left'], inputs['oncoming'])
         return state
 
 
@@ -77,14 +76,8 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Calculate the maximum Q-value of all actions for a given state
-        tmp = [self.Q[state][action] for action in self.valid_actions]
-        maxQ = max(tmp)
-        if tmp.count(maxQ) > 1:
-            best = [i for i in range(len(self.valid_actions)) if tmp[i] == maxQ]
-            i = random.choice(best)
-        else:
-            i = tmp.index(maxQ)           
-        return self.valid_actions[i] 
+        maxQ = max(self.Q[state].itervalues())
+        return maxQ 
 
 
     def createQ(self, state):
@@ -123,7 +116,9 @@ class LearningAgent(Agent):
         elif random.random() < self.epsilon:
             action = random.choice(self.valid_actions)
         else:
-            action = self.get_maxQ(self.state)            
+            maxQ = self.get_maxQ(state)
+            actions = [a for a in self.valid_actions if self.Q[state][a] == maxQ]
+            action = random.choice(actions)        
         return action
 
 
@@ -197,7 +192,7 @@ def run():
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(tolerance=0.05, n_test=100)
+    sim.run(tolerance=0.008, n_test=20)
 
     
 if __name__ == '__main__':
